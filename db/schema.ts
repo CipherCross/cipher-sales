@@ -98,17 +98,27 @@ export const upworkOutreach = upworkSchema.table("outreach", {
   lastModified: timestamp("last_modified"),
 });
 
+// ─── LinkedIn schema ──────────────────────────────────────────────────────────
+
 export const companies = pgTable("companies", {
   id: uuid("id").primaryKey().defaultRandom(),
   airtableId: varchar("airtable_id").unique().notNull(),
   companyName: varchar("company_name"),
+  approveStatus: varchar("approve_status"),
+  companyNameForMailing: varchar("company_name_for_mailing"),
   websiteUrl: varchar("website_url"),
   linkedinUrl: varchar("linkedin_url"),
+  webAppLink: varchar("web_app_link"),
   hqCountry: varchar("hq_country"),
+  foundedYear: integer("founded_year"),
+  employees: integer("employees"),
   industry: varchar("industry"),
-  employees: varchar("employees"),
+  keywords: text("keywords"),
+  description: text("description"),
+  aiSiteInfo: text("ai_site_info"),
   aiNiche: varchar("ai_niche"),
   createdAt: timestamp("created_at").defaultNow(),
+  lastModified: timestamp("last_modified"),
 });
 
 export const campaigns = pgTable("campaigns", {
@@ -119,6 +129,9 @@ export const campaigns = pgTable("campaigns", {
   message1: text("message_1"),
   message2: text("message_2"),
   message3: text("message_3"),
+  message4: text("message_4"),
+  message5: text("message_5"),
+  personalizationGeneration: varchar("personalization_generation"),
 });
 
 export const contacts = pgTable("contacts", {
@@ -126,37 +139,69 @@ export const contacts = pgTable("contacts", {
   airtableId: varchar("airtable_id").unique().notNull(),
   companyId: uuid("company_id").references(() => companies.id),
   campaignId: uuid("campaign_id").references(() => campaigns.id),
-  fullName: varchar("full_name"),
-  title: varchar("title"),
+  personaLinkedin: varchar("persona_linkedin"),
+  approveStatus: varchar("approve_status"),
   readinessStatus: varchar("readiness_status"),
+  fullName: varchar("full_name"),
+  firstName: varchar("first_name"),
+  title: varchar("title"),
   hook1Ai: text("hook_1_ai"),
   hook1Manual: text("hook_1_manual"),
   hook2Ai: text("hook_2_ai"),
   hook2Manual: text("hook_2_manual"),
+  hook3Ai: text("hook_3_ai"),
+  hook3Manual: text("hook_3_manual"),
+  hook4Ai: text("hook_4_ai"),
+  hook4Manual: text("hook_4_manual"),
+  hook5Ai: text("hook_5_ai"),
+  hook5Manual: text("hook_5_manual"),
+  createdAt: timestamp("created_at").defaultNow(),
+  lastModified: timestamp("last_modified"),
 });
 
 export const outreach = pgTable("outreach", {
   id: uuid("id").primaryKey().defaultRandom(),
   airtableId: varchar("airtable_id").unique().notNull(),
   contactId: uuid("contact_id").references(() => contacts.id),
-  campaignId: uuid("campaign_id").references(() => campaigns.id),
+  companyId: uuid("company_id").references(() => companies.id),
+  personaLinkedin: varchar("persona_linkedin"),
   stage: varchar("stage"),
   leadStatus: varchar("lead_status"),
-  connectedDate: timestamp("connected_date"),
-  repliedDate: timestamp("replied_date"),
+  fullName: varchar("full_name"),
+  title: varchar("title"),
+  leadNotes: text("lead_notes"),
+  outreachStatus: varchar("outreach_status"),
+  connectedDate: date("connected_date"),
+  repliedDate: date("replied_date"),
   whichMessageReplied: varchar("which_message_replied"),
   responseCategory: varchar("response_category"),
+  responseSubcategory: varchar("response_subcategory"),
+  nextActionDate: date("next_action_date"),
+  currentFuStep: varchar("current_fu_step"),
+  chatLink: varchar("chat_link"),
+  messageHistory: text("message_history"),
+  correspondenceExtract: text("correspondence_extract"),
+  notesBeforeCall: text("notes_before_call"),
   initialCallStatus: varchar("initial_call_status"),
+  initialCallDate: timestamp("initial_call_date"),
+  initialCallResult: varchar("initial_call_result"),
+  initialCallNotes: text("initial_call_notes"),
+  initialCallTranscript: text("initial_call_transcript"),
+  startDate: date("start_date"),
+  lastTouchDate: date("last_touch_date"),
+  statusChangeDate: date("status_change_date"),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Relations
+// ─── LinkedIn relations ───────────────────────────────────────────────────────
+
 export const companiesRelations = relations(companies, ({ many }) => ({
   contacts: many(contacts),
+  outreach: many(outreach),
 }));
 
 export const campaignsRelations = relations(campaigns, ({ many }) => ({
   contacts: many(contacts),
-  outreach: many(outreach),
 }));
 
 export const contactsRelations = relations(contacts, ({ one, many }) => ({
@@ -167,7 +212,7 @@ export const contactsRelations = relations(contacts, ({ one, many }) => ({
 
 export const outreachRelations = relations(outreach, ({ one }) => ({
   contact: one(contacts, { fields: [outreach.contactId], references: [contacts.id] }),
-  campaign: one(campaigns, { fields: [outreach.campaignId], references: [campaigns.id] }),
+  company: one(companies, { fields: [outreach.companyId], references: [companies.id] }),
 }));
 
 // ─── Upwork relations ─────────────────────────────────────────────────────────

@@ -1,0 +1,1 @@
+ALTER TABLE "outreach" ADD COLUMN "outreach_status" varchar;

@@ -1,1 +1,121 @@
 @import "tailwindcss";
+
+/* ===== Futuristic Syntax Highlighting (Cyan / Neon) ===== */
+
+/* Base highlight.js reset */
+.hljs {
+  background: transparent !important;
+  padding: 0 !important;
+}
+
+/* Keywords & builtins */
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-built_in,
+.hljs-name {
+  color: #c792ea;
+}
+
+/* Strings */
+.hljs-string,
+.hljs-attr,
+.hljs-template-variable {
+  color: #a5e6ba;
+}
+
+/* Numbers & literals */
+.hljs-number,
+.hljs-literal,
+.hljs-variable,
+.hljs-template-tag,
+.hljs-tag .hljs-attr {
+  color: #f5c076;
+}
+
+/* Functions */
+.hljs-title,
+.hljs-section,
+.hljs-selector-id {
+  color: #82aaff;
+}
+
+/* Types & classes */
+.hljs-type,
+.hljs-class .hljs-title {
+  color: #ffcb6b;
+}
+
+/* Comments */
+.hljs-comment,
+.hljs-quote,
+.hljs-deletion {
+  color: #637777;
+  font-style: italic;
+}
+
+/* Misc tokens */
+.hljs-meta,
+.hljs-meta-keyword {
+  color: #89ddff;
+}
+
+.hljs-symbol,
+.hljs-bullet,
+.hljs-link,
+.hljs-addition {
+  color: #22d3ee;
+}
+
+.hljs-emphasis {
+  font-style: italic;
+}
+
+.hljs-strong {
+  font-weight: bold;
+}
+
+/* ===== Markdown body fine-tuning ===== */
+
+.markdown-body > *:first-child {
+  margin-top: 0 !important;
+}
+
+.markdown-body > *:last-child {
+  margin-bottom: 0 !important;
+}
+
+/* Scrollbar styling for code blocks */
+.markdown-body pre::-webkit-scrollbar {
+  height: 6px;
+}
+
+.markdown-body pre::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.markdown-body pre::-webkit-scrollbar-thumb {
+  background: rgba(6, 182, 212, 0.15);
+  border-radius: 999px;
+}
+
+.markdown-body pre::-webkit-scrollbar-thumb:hover {
+  background: rgba(6, 182, 212, 0.3);
+}
+
+/* Custom scrollbar for the chat area */
+.overflow-y-auto::-webkit-scrollbar {
+  width: 6px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 999px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.12);
+}

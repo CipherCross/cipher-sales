@@ -172,6 +172,7 @@ export async function POST(req: NextRequest) {
         airtableId: rec.id,
         contactId: contactPgId,
         campaignId: campaignAirtableId ? (campaignIdMap.get(campaignAirtableId) ?? null) : null,
+        outreachStatus: (f["Outreach Status"] as string) ?? null,
         stage: (f["Stage"] as string) ?? null,
         leadStatus: (f["Lead Status"] as string) ?? null,
         connectedDate: parseDate(f["Connected Date"]),

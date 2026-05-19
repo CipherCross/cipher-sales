@@ -1,0 +1,976 @@
+{
+  "id": "552dc7dd-2b5b-4df9-b088-4bc34786be32",
+  "prevId": "a17b542b-b7bf-41d2-a837-6c2314bbf2b6",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.campaigns": {
+      "name": "campaigns",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "airtable_id": {
+          "name": "airtable_id",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "message_1": {
+          "name": "message_1",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "message_2": {
+          "name": "message_2",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "message_3": {
+          "name": "message_3",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "campaigns_airtable_id_unique": {
+          "name": "campaigns_airtable_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "airtable_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.companies": {
+      "name": "companies",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "airtable_id": {
+          "name": "airtable_id",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "company_name": {
+          "name": "company_name",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "website_url": {
+          "name": "website_url",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "linkedin_url": {
+          "name": "linkedin_url",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "hq_country": {
+          "name": "hq_country",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "industry": {
+          "name": "industry",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "employees": {
+          "name": "employees",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ai_niche": {
+          "name": "ai_niche",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "companies_airtable_id_unique": {
+          "name": "companies_airtable_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "airtable_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.contacts": {
+      "name": "contacts",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "airtable_id": {
+          "name": "airtable_id",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "company_id": {
+          "name": "company_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "campaign_id": {
+          "name": "campaign_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "full_name": {
+          "name": "full_name",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "title": {
+          "name": "title",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "readiness_status": {
+          "name": "readiness_status",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "hook_1_ai": {
+          "name": "hook_1_ai",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "hook_1_manual": {
+          "name": "hook_1_manual",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "hook_2_ai": {
+          "name": "hook_2_ai",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "hook_2_manual": {
+          "name": "hook_2_manual",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "contacts_company_id_companies_id_fk": {
+          "name": "contacts_company_id_companies_id_fk",
+          "tableFrom": "contacts",
+          "tableTo": "companies",
+          "columnsFrom": [
+            "company_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "contacts_campaign_id_campaigns_id_fk": {
+          "name": "contacts_campaign_id_campaigns_id_fk",
+          "tableFrom": "contacts",
+          "tableTo": "campaigns",
+          "columnsFrom": [
+            "campaign_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "contacts_airtable_id_unique": {
+          "name": "contacts_airtable_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "airtable_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.outreach": {
+      "name": "outreach",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "airtable_id": {
+          "name": "airtable_id",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "contact_id": {
+          "name": "contact_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "campaign_id": {
+          "name": "campaign_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "outreach_status": {
+          "name": "outreach_status",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "stage": {
+          "name": "stage",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "lead_status": {
+          "name": "lead_status",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "connected_date": {
+          "name": "connected_date",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "replied_date": {
+          "name": "replied_date",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "which_message_replied": {
+          "name": "which_message_replied",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "response_category": {
+          "name": "response_category",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "initial_call_status": {
+          "name": "initial_call_status",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "outreach_contact_id_contacts_id_fk": {
+          "name": "outreach_contact_id_contacts_id_fk",
+          "tableFrom": "outreach",
+          "tableTo": "contacts",
+          "columnsFrom": [
+            "contact_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "outreach_campaign_id_campaigns_id_fk": {
+          "name": "outreach_campaign_id_campaigns_id_fk",
+          "tableFrom": "outreach",
+          "tableTo": "campaigns",
+          "columnsFrom": [
+            "campaign_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "outreach_airtable_id_unique": {
+          "name": "outreach_airtable_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "airtable_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "upwork.bids": {
+      "name": "bids",
+      "schema": "upwork",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "airtable_id": {
+          "name": "airtable_id",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "uid": {
+          "name": "uid",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "job_quality": {
+          "name": "job_quality",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "bid_status": {
+          "name": "bid_status",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "interviews": {
+          "name": "interviews",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "job_link": {
+          "name": "job_link",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "job_title": {
+          "name": "job_title",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "job_status": {
+          "name": "job_status",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "job_description": {
+          "name": "job_description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "job_created_at": {
+          "name": "job_created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "client_country": {
+          "name": "client_country",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "avg_hourly_rate": {
+          "name": "avg_hourly_rate",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "total_spent": {
+          "name": "total_spent",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "total_hires": {
+          "name": "total_hires",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "hire_rate": {
+          "name": "hire_rate",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "feedback_count": {
+          "name": "feedback_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "feedback_score": {
+          "name": "feedback_score",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "profile": {
+          "name": "profile",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "search_name": {
+          "name": "search_name",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "proposal_sent": {
+          "name": "proposal_sent",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "cover_letter": {
+          "name": "cover_letter",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "boosted": {
+          "name": "boosted",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "boost_outbid": {
+          "name": "boost_outbid",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "connects_spent": {
+          "name": "connects_spent",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "manager_name": {
+          "name": "manager_name",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "view_status": {
+          "name": "view_status",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "view_date": {
+          "name": "view_date",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reply_status": {
+          "name": "reply_status",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reply_date": {
+          "name": "reply_date",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "proposal_results": {
+          "name": "proposal_results",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "budget": {
+          "name": "budget",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "last_modified": {
+          "name": "last_modified",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "bids_airtable_id_unique": {
+          "name": "bids_airtable_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "airtable_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "upwork.outreach": {
+      "name": "outreach",
+      "schema": "upwork",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "airtable_id": {
+          "name": "airtable_id",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "uid": {
+          "name": "uid",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "source_data": {
+          "name": "source_data",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "job_quality": {
+          "name": "job_quality",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "stage": {
+          "name": "stage",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "client_name": {
+          "name": "client_name",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "profile": {
+          "name": "profile",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "proposal_sent": {
+          "name": "proposal_sent",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "cover_letter": {
+          "name": "cover_letter",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "initial_message": {
+          "name": "initial_message",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "view_date": {
+          "name": "view_date",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reply_date": {
+          "name": "reply_date",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "job_title": {
+          "name": "job_title",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "job_description": {
+          "name": "job_description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "job_link": {
+          "name": "job_link",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "job_created_at": {
+          "name": "job_created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "client_country": {
+          "name": "client_country",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "total_spent": {
+          "name": "total_spent",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "avg_hourly_rate": {
+          "name": "avg_hourly_rate",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "total_hires": {
+          "name": "total_hires",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "hire_rate": {
+          "name": "hire_rate",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "feedback_count": {
+          "name": "feedback_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "feedback_score": {
+          "name": "feedback_score",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "chat_link": {
+          "name": "chat_link",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "message_history": {
+          "name": "message_history",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "correspondence_extract": {
+          "name": "correspondence_extract",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "next_action_date": {
+          "name": "next_action_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "current_fu_step": {
+          "name": "current_fu_step",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tasks_notes": {
+          "name": "tasks_notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "last_contact": {
+          "name": "last_contact",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "notes_before_call": {
+          "name": "notes_before_call",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "initial_call_status": {
+          "name": "initial_call_status",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "initial_call_date": {
+          "name": "initial_call_date",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "initial_call_result": {
+          "name": "initial_call_result",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "initial_call_notes": {
+          "name": "initial_call_notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "initial_call_transcript": {
+          "name": "initial_call_transcript",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "second_call_status": {
+          "name": "second_call_status",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "second_call_date": {
+          "name": "second_call_date",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "second_call_result": {
+          "name": "second_call_result",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "second_call_notes": {
+          "name": "second_call_notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "second_call_transcript": {
+          "name": "second_call_transcript",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "estimate_link": {
+          "name": "estimate_link",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "estimate_amount": {
+          "name": "estimate_amount",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "estimate_presentation_call_status": {
+          "name": "estimate_presentation_call_status",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "estimate_presentation_call_date": {
+          "name": "estimate_presentation_call_date",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "estimate_result": {
+          "name": "estimate_result",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "estimate_presentation_notes": {
+          "name": "estimate_presentation_notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "actual_call": {
+          "name": "actual_call",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "missing_call_result": {
+          "name": "missing_call_result",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "lost_reason": {
+          "name": "lost_reason",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "lost_notes": {
+          "name": "lost_notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "last_modified": {
+          "name": "last_modified",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "outreach_airtable_id_unique": {
+          "name": "outreach_airtable_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "airtable_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {
+    "upwork": "upwork"
+  },
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

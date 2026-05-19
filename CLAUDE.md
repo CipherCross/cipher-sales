@@ -56,7 +56,7 @@ All tables use `airtable_id` as the upsert key.
 - **companies** — company profile data (industry, country, employees, ai_niche)
 - **campaigns** — outreach campaigns with 3 message templates
 - **contacts** — individual leads linked to company + campaign, with AI/manual hooks
-- **outreach** — funnel tracking (stage, lead_status, connected/replied dates, response_category)
+- **outreach** — funnel tracking (outreach_status for funnel: Waiting/Active/Connected/Replied/Continued/Stopped; stage, lead_status, connected/replied dates, response_category)
 
 Foreign keys: `contacts → companies`, `contacts → campaigns`, `outreach → contacts`, `outreach → campaigns`.
 
@@ -71,7 +71,7 @@ No FK between the two Upwork tables (independent Airtable tables).
 
 Three Drizzle-backed tools exposed to Claude:
 
-- `getCampaignFunnel` — aggregates outreach counts by stage/lead_status, optionally filtered by campaign name
+- `getCampaignFunnel` — aggregates outreach counts by outreach_status (Waiting/Active/Connected/Replied), where Replied = Replied+Continued+Stopped; optionally filtered by campaign name
 - `compareHookPerformance` — joins contacts + outreach to compare AI vs manual hook reply rates
 - `getRecentResponses` — fetches recent replied outreach joined with contact + company data
 
