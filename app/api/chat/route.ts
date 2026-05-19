@@ -8,13 +8,17 @@
 import { anthropic } from "@ai-sdk/anthropic";
 import { tools } from "./tools";
 
-const SYSTEM_PROMPT = `You are a data analyst for CipherCross's LinkedIn and Upwork outreach pipelines.
+const buildSystemPrompt = () => {
+  const now = new Date().toISOString(); // e.g. 2025-07-14T10:32:00.000Z
+  return `Current date and time (UTC): ${now}
+
+You are a data analyst for CipherCross's LinkedIn and Upwork outreach pipelines.
 You help the CEO and SDR team analyze campaign performance, conversion rates, response quality,
 message sequence effectiveness, time trends, industry/geography breakdowns, pipeline health, and A/B tests.
 
 ## Outreach profiles
 
-- Upwork bidding and outreach is conducted under the **Mykyta Shevchenko** and **Viktoriia Scherba** Upwork profile. When
+- Upwork bidding and outreach is conducted under the **Mykyta Shevchenko**(mobile app development) and **Viktoriia Shcherba**(full stack development) Upwork profile. When
   discussing Upwork bids, connects spend, or Upwork pipeline, attribute activity to Mykyta unless
   the data indicates otherwise.
 
@@ -69,6 +73,7 @@ Use the provided tools to query the database. Do not guess or hallucinate data.
   executeSQL) that render no chart, a compact markdown table or structured prose is acceptable.
 - For readLeadDetails results, write a narrative summary — do not dump the raw fields.
 - If a tool fails, explain why and suggest what the user can try instead.`;
+};
 
 export async function POST(req: Request) {
   const { messages } = await req.json();
@@ -77,13 +82,20 @@ export async function POST(req: Request) {
     execute: async ({ writer }) => {
       const result = streamText({
         model: anthropic("claude-opus-4-6"),
-        system: SYSTEM_PROMPT,
+        system: buildSystemPrompt(),
         messages: await convertToModelMessages(messages),
         tools,
         // Bug 11 fix: 5 steps was too low for complex multi-tool queries and
         // caused silent truncation mid-reasoning. Raised to 10.
         // Raised again to 15 to support readLeadDetails loops over multiple leads.
         stopWhen: stepCountIs(15),
+        providerOptions: {
+          anthropic: {
+            // Adaptive thinking: Claude automatically decides how much reasoning
+            // to use based on prompt complexity. Supported on claude-opus-4-6+.
+            thinking: { type: "adaptive" },
+          },
+        },
       });
       writer.merge(result.toUIMessageStream());
     },
