@@ -1,0 +1,157 @@
+CREATE SCHEMA "upwork";
+--> statement-breakpoint
+CREATE TABLE "campaigns" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"airtable_id" varchar NOT NULL,
+	"name" varchar,
+	"status" varchar,
+	"message_1" text,
+	"message_2" text,
+	"message_3" text,
+	CONSTRAINT "campaigns_airtable_id_unique" UNIQUE("airtable_id")
+);
+--> statement-breakpoint
+CREATE TABLE "companies" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"airtable_id" varchar NOT NULL,
+	"company_name" varchar,
+	"website_url" varchar,
+	"linkedin_url" varchar,
+	"hq_country" varchar,
+	"industry" varchar,
+	"employees" varchar,
+	"ai_niche" varchar,
+	"created_at" timestamp DEFAULT now(),
+	CONSTRAINT "companies_airtable_id_unique" UNIQUE("airtable_id")
+);
+--> statement-breakpoint
+CREATE TABLE "contacts" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"airtable_id" varchar NOT NULL,
+	"company_id" uuid,
+	"campaign_id" uuid,
+	"full_name" varchar,
+	"title" varchar,
+	"readiness_status" varchar,
+	"hook_1_ai" text,
+	"hook_1_manual" text,
+	"hook_2_ai" text,
+	"hook_2_manual" text,
+	CONSTRAINT "contacts_airtable_id_unique" UNIQUE("airtable_id")
+);
+--> statement-breakpoint
+CREATE TABLE "outreach" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"airtable_id" varchar NOT NULL,
+	"contact_id" uuid,
+	"campaign_id" uuid,
+	"stage" varchar,
+	"lead_status" varchar,
+	"connected_date" timestamp,
+	"replied_date" timestamp,
+	"which_message_replied" varchar,
+	"response_category" varchar,
+	"initial_call_status" varchar,
+	CONSTRAINT "outreach_airtable_id_unique" UNIQUE("airtable_id")
+);
+--> statement-breakpoint
+CREATE TABLE "upwork"."bids" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"airtable_id" varchar NOT NULL,
+	"uid" varchar,
+	"job_quality" varchar,
+	"bid_status" varchar,
+	"interviews" integer,
+	"job_link" varchar,
+	"job_title" varchar,
+	"job_status" varchar,
+	"job_description" text,
+	"job_created_at" timestamp,
+	"client_country" varchar,
+	"avg_hourly_rate" real,
+	"total_spent" real,
+	"total_hires" integer,
+	"hire_rate" real,
+	"feedback_count" integer,
+	"feedback_score" real,
+	"profile" varchar,
+	"search_name" varchar,
+	"proposal_sent" timestamp,
+	"cover_letter" text,
+	"boosted" varchar,
+	"boost_outbid" varchar,
+	"connects_spent" integer,
+	"manager_name" varchar,
+	"view_status" varchar,
+	"view_date" timestamp,
+	"reply_status" varchar,
+	"reply_date" timestamp,
+	"proposal_results" varchar,
+	"budget" varchar,
+	"created_at" timestamp,
+	"last_modified" timestamp,
+	CONSTRAINT "bids_airtable_id_unique" UNIQUE("airtable_id")
+);
+--> statement-breakpoint
+CREATE TABLE "upwork"."outreach" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"airtable_id" varchar NOT NULL,
+	"uid" varchar,
+	"source_data" varchar,
+	"job_quality" varchar,
+	"stage" varchar,
+	"client_name" varchar,
+	"profile" varchar,
+	"proposal_sent" timestamp,
+	"cover_letter" text,
+	"initial_message" text,
+	"view_date" timestamp,
+	"reply_date" timestamp,
+	"job_title" varchar,
+	"job_description" text,
+	"job_link" varchar,
+	"job_created_at" timestamp,
+	"client_country" varchar,
+	"total_spent" real,
+	"avg_hourly_rate" real,
+	"total_hires" integer,
+	"hire_rate" real,
+	"feedback_count" integer,
+	"feedback_score" real,
+	"chat_link" varchar,
+	"message_history" text,
+	"correspondence_extract" text,
+	"next_action_date" date,
+	"current_fu_step" varchar,
+	"tasks_notes" text,
+	"last_contact" timestamp,
+	"notes_before_call" text,
+	"initial_call_status" varchar,
+	"initial_call_date" timestamp,
+	"initial_call_result" varchar,
+	"initial_call_notes" text,
+	"initial_call_transcript" text,
+	"second_call_status" varchar,
+	"second_call_date" timestamp,
+	"second_call_result" varchar,
+	"second_call_notes" text,
+	"second_call_transcript" text,
+	"estimate_link" varchar,
+	"estimate_amount" real,
+	"estimate_presentation_call_status" varchar,
+	"estimate_presentation_call_date" timestamp,
+	"estimate_result" varchar,
+	"estimate_presentation_notes" text,
+	"actual_call" varchar,
+	"missing_call_result" varchar,
+	"lost_reason" varchar,
+	"lost_notes" text,
+	"created_at" timestamp,
+	"last_modified" timestamp,
+	CONSTRAINT "outreach_airtable_id_unique" UNIQUE("airtable_id")
+);
+--> statement-breakpoint
+ALTER TABLE "contacts" ADD CONSTRAINT "contacts_company_id_companies_id_fk" FOREIGN KEY ("company_id") REFERENCES "public"."companies"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "contacts" ADD CONSTRAINT "contacts_campaign_id_campaigns_id_fk" FOREIGN KEY ("campaign_id") REFERENCES "public"."campaigns"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "outreach" ADD CONSTRAINT "outreach_contact_id_contacts_id_fk" FOREIGN KEY ("contact_id") REFERENCES "public"."contacts"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "outreach" ADD CONSTRAINT "outreach_campaign_id_campaigns_id_fk" FOREIGN KEY ("campaign_id") REFERENCES "public"."campaigns"("id") ON DELETE no action ON UPDATE no action;

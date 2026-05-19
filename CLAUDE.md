@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project overview
 
-CipherCross Internal Analytics Tool — a "Chat-with-Data" interface for a LinkedIn outreach pipeline. An AI assistant (Claude 3.5 Sonnet via Vercel AI SDK) answers analytical questions by running Drizzle queries against a PostgreSQL database synced from Airtable.
+CipherCross Internal Analytics Tool — a "Chat-with-Data" interface for LinkedIn and Upwork outreach pipelines. An AI assistant (Claude 3.5 Sonnet via Vercel AI SDK) answers analytical questions by running Drizzle queries against a PostgreSQL database synced from Airtable.
 
 ## Commands
 
@@ -40,7 +40,7 @@ app/
   page.tsx           # Chat UI (useChat)
   globals.css
 db/
-  schema.ts          # 4 tables: companies, campaigns, contacts, outreach
+  schema.ts          # 6 tables: public.{companies, campaigns, contacts, outreach} + upwork.{bids, outreach}
   index.ts           # postgres client singleton + drizzle instance
 drizzle/             # generated migration files
 drizzle.config.ts    # points to db/schema.ts, reads DATABASE_URL
@@ -49,7 +49,9 @@ proxy.ts             # Clerk middleware
 
 ## Database schema
 
-Four tables (all with `airtable_id` as the upsert key):
+All tables use `airtable_id` as the upsert key.
+
+### `public` schema — LinkedIn pipeline
 
 - **companies** — company profile data (industry, country, employees, ai_niche)
 - **campaigns** — outreach campaigns with 3 message templates
@@ -57,6 +59,13 @@ Four tables (all with `airtable_id` as the upsert key):
 - **outreach** — funnel tracking (stage, lead_status, connected/replied dates, response_category)
 
 Foreign keys: `contacts → companies`, `contacts → campaigns`, `outreach → contacts`, `outreach → campaigns`.
+
+### `upwork` schema — Upwork pipeline
+
+- **upwork.bids** — proposals/bids sent to Upwork jobs (job quality, bid status, job metadata, client stats, proposal tracking with view/reply dates, connects spent, boost info)
+- **upwork.outreach** — CRM deal pipeline from first contact through estimate presentation (stage funnel: New → First contact → Negotiations → Call Booked → Estimating → Estimate presentation → Contract Signed / Lost; includes initial & second call tracking, estimate data, follow-up steps, lost reason)
+
+No FK between the two Upwork tables (independent Airtable tables).
 
 ## AI tools (in `/api/chat/route.ts`)
 
@@ -68,16 +77,19 @@ Three Drizzle-backed tools exposed to Claude:
 
 ## Data flow
 
-Make.com → Airtable → `/api/sync` (daily cron + manual button) → PostgreSQL → Drizzle tools → Claude → Chat UI
+- **LinkedIn:** Make.com → Airtable (Web 2 Mob base) → `/api/sync` → PostgreSQL `public.*` tables
+- **Upwork:** Make.com → Airtable (Upwork base) → `/api/sync` → PostgreSQL `upwork.*` tables
+- Both synced via daily Vercel Cron + manual UI button → Drizzle tools → Claude → Chat UI
 
 ## Environment variables
 
 See `.env.local.example`. Required:
 
 ```
-DATABASE_URL=          # Railway PostgreSQL
+DATABASE_URL=              # Railway PostgreSQL
 AIRTABLE_API_KEY=
-AIRTABLE_LINKEDIN_BASE_ID=
-CRON_SECRET=           # Authorization header for /api/sync
+AIRTABLE_LINKEDIN_BASE_ID= # app4P6PbWSwEEmOIz
+AIRTABLE_UPWORK_BASE_ID=   # appfQxws68Ptopf1C
+CRON_SECRET=               # Authorization header for /api/sync
 ANTHROPIC_API_KEY=
 ```
