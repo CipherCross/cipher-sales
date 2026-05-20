@@ -33,7 +33,13 @@ function linkedIds(field: unknown): string[] {
   return [];
 }
 
-function parseDate(val: unknown): Date | null {
+function parseDate(val: unknown): string | null {
+  if (!val || typeof val !== "string") return null;
+  const d = new Date(val);
+  return isNaN(d.getTime()) ? null : d.toISOString().split("T")[0];
+}
+
+function parseTimestamp(val: unknown): Date | null {
   if (!val || typeof val !== "string") return null;
   const d = new Date(val);
   return isNaN(d.getTime()) ? null : d;
@@ -79,7 +85,7 @@ export async function POST(req: NextRequest) {
         linkedinUrl: (f["LinkedIn URL"] as string) ?? null,
         hqCountry: (f["HQ country"] as string) ?? null,
         industry: (f["Industry"] as string) ?? null,
-        employees: f["Employees"] != null ? String(f["Employees"]) : null,
+        employees: f["Employees"] != null ? Number(f["Employees"]) : null,
         aiNiche: (f["AI Niche"] as string) ?? null,
       };
 
@@ -205,7 +211,7 @@ export async function POST(req: NextRequest) {
         jobTitle: (f["Job title"] as string) ?? null,
         jobStatus: (f["Job status"] as string) ?? null,
         jobDescription: (f["Job Description"] as string) ?? null,
-        jobCreatedAt: parseDate(f["Job Created At"]),
+        jobCreatedAt: parseTimestamp(f["Job Created At"]),
         clientCountry: (f["Client Country"] as string) ?? null,
         avgHourlyRate: f["Avg Hourly Rate"] != null ? Number(f["Avg Hourly Rate"]) : null,
         totalSpent: f["Total Spent"] != null ? Number(f["Total Spent"]) : null,
@@ -215,20 +221,20 @@ export async function POST(req: NextRequest) {
         feedbackScore: f["Feedback Score"] != null ? Number(f["Feedback Score"]) : null,
         profile: (f["Profile"] as string) ?? null,
         searchName: (f["Search Name"] as string) ?? null,
-        proposalSent: parseDate(f["Proposal Sent"]),
+        proposalSent: parseTimestamp(f["Proposal Sent"]),
         coverLetter: (f["Cover Letter"] as string) ?? null,
         boosted: (f["Boosted"] as string) ?? null,
         boostOutbid: (f["Boost Outbid"] as string) ?? null,
         connectsSpent: f["Connects Spent"] != null ? Number(f["Connects Spent"]) : null,
         managerName: (f["Manager Name"] as string) ?? null,
         viewStatus: (f["View Status"] as string) ?? null,
-        viewDate: parseDate(f["View Date"]),
+        viewDate: parseTimestamp(f["View Date"]),
         replyStatus: (f["Reply Status"] as string) ?? null,
-        replyDate: parseDate(f["Reply Date"]),
+        replyDate: parseTimestamp(f["Reply Date"]),
         proposalResults: (f["Proposal Results"] as string) ?? null,
         budget: (f["Budget"] as string) ?? null,
-        createdAt: parseDate(f["Created"]),
-        lastModified: parseDate(f["Last Modified"]),
+        createdAt: parseTimestamp(f["Created"]),
+        lastModified: parseTimestamp(f["Last Modified"]),
       };
 
       await db.insert(upworkBids).values(row).onConflictDoUpdate({ target: upworkBids.airtableId, set: row });
@@ -248,15 +254,15 @@ export async function POST(req: NextRequest) {
         stage: (f["Stage"] as string) ?? null,
         clientName: (f["Client Name"] as string) ?? null,
         profile: (f["Profile"] as string) ?? null,
-        proposalSent: parseDate(f["Proposal Sent"]),
+        proposalSent: parseTimestamp(f["Proposal Sent"]),
         coverLetter: (f["Cover Letter"] as string) ?? null,
         initialMessage: (f["Initial Message"] as string) ?? null,
-        viewDate: parseDate(f["View Date"]),
-        replyDate: parseDate(f["Reply Date"]),
+        viewDate: parseTimestamp(f["View Date"]),
+        replyDate: parseTimestamp(f["Reply Date"]),
         jobTitle: (f["Job Title"] as string) ?? null,
         jobDescription: (f["Job Description"] as string) ?? null,
         jobLink: (f["Job Link"] as string) ?? null,
-        jobCreatedAt: parseDate(f["Job Created At"]),
+        jobCreatedAt: parseTimestamp(f["Job Created At"]),
         clientCountry: (f["Client Country"] as string) ?? null,
         totalSpent: f["Total Spent"] != null ? Number(f["Total Spent"]) : null,
         avgHourlyRate: f["Avg Hourly Rate"] != null ? Number(f["Avg Hourly Rate"]) : null,
@@ -270,30 +276,30 @@ export async function POST(req: NextRequest) {
         nextActionDate: (f["Next Action Date"] as string) ?? null,
         currentFuStep: (f["Current FU Step"] as string) ?? null,
         tasksNotes: (f["Tasks / Notes"] as string) ?? null,
-        lastContact: parseDate(f["Last Contact"]),
+        lastContact: parseTimestamp(f["Last Contact"]),
         notesBeforeCall: (f["Notes before the call"] as string) ?? null,
         initialCallStatus: (f["Initial Call Status"] as string) ?? null,
-        initialCallDate: parseDate(f["Initial Call Date"]),
+        initialCallDate: parseTimestamp(f["Initial Call Date"]),
         initialCallResult: (f["Initial Call Result"] as string) ?? null,
         initialCallNotes: (f["Initial Call Notes"] as string) ?? null,
         initialCallTranscript: (f["Initial Call Transcript"] as string) ?? null,
         secondCallStatus: (f["Second Call Status"] as string) ?? null,
-        secondCallDate: parseDate(f["Second Call Date"]),
+        secondCallDate: parseTimestamp(f["Second Call Date"]),
         secondCallResult: (f["Second Call Result"] as string) ?? null,
         secondCallNotes: (f["Second Call Notes"] as string) ?? null,
         secondCallTranscript: (f["Second Call Transcript"] as string) ?? null,
         estimateLink: (f["Estimate Link"] as string) ?? null,
         estimateAmount: f["Estimate Amount"] != null ? Number(f["Estimate Amount"]) : null,
         estimatePresentationCallStatus: (f["Estimate Presentation Call Status"] as string) ?? null,
-        estimatePresentationCallDate: parseDate(f["Estimate Presentation Call Date"]),
+        estimatePresentationCallDate: parseTimestamp(f["Estimate Presentation Call Date"]),
         estimateResult: (f["Estimate Result"] as string) ?? null,
         estimatePresentationNotes: (f["Estimate Presentation Notes"] as string) ?? null,
         actualCall: (f["Actual Call"] as string) ?? null,
         missingCallResult: (f["Missing Call Result"] as string) ?? null,
         lostReason: (f["Lost Reason"] as string) ?? null,
         lostNotes: (f["Lost Notes"] as string) ?? null,
-        createdAt: parseDate(f["Created"]),
-        lastModified: parseDate(f["Last Modified"]),
+        createdAt: parseTimestamp(f["Created"]),
+        lastModified: parseTimestamp(f["Last Modified"]),
       };
 
       await db.insert(upworkOutreach).values(row).onConflictDoUpdate({ target: upworkOutreach.airtableId, set: row });
