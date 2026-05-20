@@ -11,7 +11,8 @@
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "db:full-sync": "npx tsx scripts/full-sync.ts"
+    "db:full-sync": "npx tsx scripts/full-sync.ts",
+    "db:local": "docker compose up -d && echo 'Local DB running at localhost:5432'"
   },
   "engines": {
     "node": ">=20.9.0"
