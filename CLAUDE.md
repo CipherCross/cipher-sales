@@ -23,7 +23,7 @@ npm run db:studio    # open Drizzle Studio
 
 - **Next.js** (App Router, TypeScript, React Server Components)
 - **Tailwind CSS v4** — config lives in `app/globals.css` via `@import "tailwindcss"`, no `tailwind.config.*`
-- **Clerk** — auth; `proxy.ts` runs `clerkMiddleware()` on all routes
+- **Clerk** — auth; `middleware.ts` runs `clerkMiddleware()` on all routes
 - **Drizzle ORM** + **postgres** driver — schema in `db/schema.ts`, client singleton in `db/index.ts`
 - **PostgreSQL** on Railway — connection via `DATABASE_URL`
 - **Vercel AI SDK** (`ai`, `@ai-sdk/anthropic`) + **Claude 3.5 Sonnet** — chat backend
@@ -44,7 +44,7 @@ db/
   index.ts           # postgres client singleton + drizzle instance
 drizzle/             # generated migration files
 drizzle.config.ts    # points to db/schema.ts, reads DATABASE_URL
-proxy.ts             # Clerk middleware
+middleware.ts        # Clerk middleware
 ```
 
 ## Database schema
