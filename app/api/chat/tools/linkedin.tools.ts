@@ -56,7 +56,10 @@ export const linkedinTools = {
   compareHookPerformance: tool({
     description:
       "Compare reply rates between AI-generated and manually-edited hook personalizations. " +
-      "Returns total contacts and replied count for AI vs manual hook variants.",
+      "Returns total contacts and replied count for AI vs manual hook variants. " +
+      "Contacts that have BOTH an AI and a manual hook for the slot are ambiguous (we cannot tell which was sent) " +
+      "and are excluded from the comparison — their count is reported separately as ambiguousExcluded. " +
+      "Note: reply attribution is at the contact level (contact replied at all), not tied to the specific hook sent.",
     inputSchema: zodSchema(
       z.object({
         hookNumber: z
@@ -86,7 +89,18 @@ export const linkedinTools = {
 
       const aiField = aiFields[hookNumber as keyof typeof aiFields];
       const manualField = manualFields[hookNumber as keyof typeof manualFields];
-      const hookTypeExpr = sql<string>`CASE WHEN ${manualField} IS NOT NULL THEN 'manual' ELSE 'ai' END`;
+
+      // A contact only counts as a clean "ai" or "manual" data point when exactly
+      // one variant exists for the slot. Contacts with both variants populated are
+      // ambiguous (we cannot tell which hook was actually sent) and are bucketed
+      // as 'both' so they can be excluded from the comparison.
+      const hookTypeExpr = sql<string>`
+        CASE
+          WHEN ${manualField} IS NOT NULL AND ${aiField} IS NULL THEN 'manual'
+          WHEN ${aiField} IS NOT NULL AND ${manualField} IS NULL THEN 'ai'
+          ELSE 'both'
+        END
+      `;
 
       // Bug 1 fix: original query mixed cardinalities — COUNT(*) on contacts rows
       // but COUNT(outreach.repliedDate) on the joined outreach rows, inflating
@@ -104,12 +118,21 @@ export const linkedinTools = {
         .where(sql`${aiField} IS NOT NULL OR ${manualField} IS NOT NULL`)
         .groupBy(hookTypeExpr);
 
-      return rows.map((r) => ({
-        hookType: r.hookType,
-        total: Number(r.total),
-        replied: Number(r.replied),
-        replyRatePct: pct(Number(r.replied), Number(r.total)),
-      }));
+      const ambiguous = rows.find((r) => r.hookType === "both");
+      const comparison = rows
+        .filter((r) => r.hookType !== "both")
+        .map((r) => ({
+          hookType: r.hookType,
+          total: Number(r.total),
+          replied: Number(r.replied),
+          replyRatePct: pct(Number(r.replied), Number(r.total)),
+        }));
+
+      return {
+        hookNumber,
+        comparison,
+        ambiguousExcluded: ambiguous ? Number(ambiguous.total) : 0,
+      };
     }),
   }),
 
@@ -222,7 +245,7 @@ export const linkedinTools = {
         ...stringDateRange(outreach.repliedDate, startDate, endDate),
       ];
       if (campaignName) conditions.push(eq(campaigns.name, campaignName));
-      if (industry) conditions.push(sql`LOWER(${companies.industry}) LIKE ${"% " + industry.toLowerCase() + "% "}`);
+      if (industry) conditions.push(sql`LOWER(${companies.industry}) LIKE ${"%" + industry.toLowerCase() + "%"}`);
 
       // Bug 2 fix: using leftJoin for companies combined with a WHERE filter on
       // companies.industry silently dropped rows where outreach.companyId is null
@@ -527,6 +550,94 @@ export const linkedinTools = {
         .leftJoin(companies, eq(outreach.companyId, companies.id))
         .where(and(...conditions))
         .orderBy(outreach.nextActionDate)
+        .limit(limit);
+    }),
+  }),
+
+  // ── 10b. Pipeline velocity & stale leads ────────────────────────────────
+  getPipelineVelocity: tool({
+    description:
+      "LinkedIn pipeline timing analysis. Two modes: " +
+      '(1) "velocity" — average and median days from outreach start → connection and from connection → reply, ' +
+      "with sample sizes, to measure how fast the pipeline moves. " +
+      '(2) "stale" — in-progress leads (outreach_status Active or Connected) that have not been touched in N days ' +
+      "and have not yet replied, sorted oldest-touch first. Use stale to find leads going cold that need a nudge.",
+    inputSchema: zodSchema(
+      z.object({
+        mode: z
+          .enum(["velocity", "stale"])
+          .describe('"velocity" for timing metrics, "stale" for cold in-progress leads.'),
+        campaignName: z.string().optional().describe("Filter by exact campaign name."),
+        staleDays: z
+          .number()
+          .int()
+          .min(1)
+          .max(180)
+          .default(14)
+          .describe("For stale mode: a lead is stale if last_touch_date is older than this many days. Defaults to 14."),
+        limit: z
+          .number()
+          .int()
+          .min(1)
+          .max(100)
+          .default(25)
+          .describe("For stale mode: max records to return. Defaults to 25."),
+      }),
+    ),
+    execute: withToolError(async ({ mode, campaignName, staleDays, limit }) => {
+      if (mode === "velocity") {
+        const rows = await db
+          .select({
+            connectSample: sql<number>`COUNT(${outreach.connectedDate} - ${outreach.startDate})`,
+            avgDaysToConnect: sql<number>`ROUND(AVG(${outreach.connectedDate} - ${outreach.startDate})::numeric, 1)`,
+            medianDaysToConnect: sql<number>`ROUND((PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY (${outreach.connectedDate} - ${outreach.startDate})))::numeric, 1)`,
+            replySample: sql<number>`COUNT(${outreach.repliedDate} - ${outreach.connectedDate})`,
+            avgDaysToReply: sql<number>`ROUND(AVG(${outreach.repliedDate} - ${outreach.connectedDate})::numeric, 1)`,
+            medianDaysToReply: sql<number>`ROUND((PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY (${outreach.repliedDate} - ${outreach.connectedDate})))::numeric, 1)`,
+          })
+          .from(outreach)
+          .leftJoin(contacts, eq(outreach.contactId, contacts.id))
+          .leftJoin(campaigns, eq(contacts.campaignId, campaigns.id))
+          .where(campaignName ? eq(campaigns.name, campaignName) : undefined);
+
+        const r = rows[0];
+        return {
+          connectSample: Number(r?.connectSample ?? 0),
+          avgDaysToConnect: Number(r?.avgDaysToConnect ?? 0),
+          medianDaysToConnect: Number(r?.medianDaysToConnect ?? 0),
+          replySample: Number(r?.replySample ?? 0),
+          avgDaysToReply: Number(r?.avgDaysToReply ?? 0),
+          medianDaysToReply: Number(r?.medianDaysToReply ?? 0),
+        };
+      }
+
+      // mode === "stale"
+      const conditions = [
+        sql`${outreach.outreachStatus} IN ('Active', 'Connected')`,
+        isNotNull(outreach.lastTouchDate),
+        sql`${outreach.lastTouchDate} < CURRENT_DATE - ${staleDays}`,
+      ];
+      if (campaignName) conditions.push(eq(campaigns.name, campaignName));
+
+      return db
+        .select({
+          contactName: outreach.fullName,
+          title: outreach.title,
+          companyName: companies.companyName,
+          industry: companies.industry,
+          stage: outreach.stage,
+          outreachStatus: outreach.outreachStatus,
+          lastTouchDate: outreach.lastTouchDate,
+          daysSinceTouch: sql<number>`(CURRENT_DATE - ${outreach.lastTouchDate})`,
+          nextActionDate: outreach.nextActionDate,
+          currentFuStep: outreach.currentFuStep,
+        })
+        .from(outreach)
+        .leftJoin(companies, eq(outreach.companyId, companies.id))
+        .leftJoin(contacts, eq(outreach.contactId, contacts.id))
+        .leftJoin(campaigns, eq(contacts.campaignId, campaigns.id))
+        .where(and(...conditions))
+        .orderBy(outreach.lastTouchDate)
         .limit(limit);
     }),
   }),

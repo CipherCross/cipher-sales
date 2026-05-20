@@ -1,6 +1,7 @@
 import { tool, zodSchema } from "ai";
 import { z } from "zod";
 import { and, count, desc, isNotNull, lt, sql } from "drizzle-orm";
+import type { AnyColumn } from "drizzle-orm";
 import { db } from "@/db";
 import { outreach, upworkBids, upworkOutreach } from "@/db/schema";
 import { stringDateRange, timestampDateRange } from "./shared/conditions";
@@ -124,6 +125,132 @@ export const crossChannelTools = {
           estimatesSent: Number(uo.estimatesSent),
           estimatesWon: Number(uo.estimatesWon),
         },
+      };
+    }),
+  }),
+
+  // ── 19. Period-over-period comparison ───────────────────────────────────
+  getPeriodComparison: tool({
+    description:
+      "Compare the most recent trailing window of N days against the immediately preceding window of N days, " +
+      "for one channel. Returns each key metric with its current value, previous value, absolute delta, and " +
+      "percent change — so the team can see what is improving or declining week-over-week. " +
+      "Use this whenever the user asks 'how are we doing vs last week/period' or wants recent momentum.",
+    inputSchema: zodSchema(
+      z.object({
+        channel: z
+          .enum(["linkedin", "upworkBids", "upworkOutreach"])
+          .describe("Which pipeline to compare."),
+        windowDays: z
+          .number()
+          .int()
+          .min(1)
+          .max(90)
+          .default(7)
+          .describe("Length of each comparison window in days. Defaults to 7 (this week vs last week)."),
+      }),
+    ),
+    execute: withToolError(async ({ channel, windowDays }) => {
+      const fmt = (d: Date) => d.toISOString().slice(0, 10);
+      const today = new Date();
+      const curStartD = new Date(today);
+      curStartD.setDate(curStartD.getDate() - windowDays);
+      const prevStartD = new Date(today);
+      prevStartD.setDate(prevStartD.getDate() - 2 * windowDays);
+      const curStart = fmt(curStartD);
+      const prevStart = fmt(prevStartD);
+
+      const buildMetric = (name: string, current: number, previous: number) => ({
+        metric: name,
+        current,
+        previous,
+        deltaAbs: current - previous,
+        deltaPct: previous > 0 ? +(((current - previous) / previous) * 100).toFixed(1) : null,
+      });
+
+      // Counts rows whose date column falls in the current vs previous window.
+      const curCount = (col: AnyColumn) =>
+        sql<number>`COUNT(CASE WHEN ${col} >= ${curStart} THEN 1 END)`;
+      const prevCount = (col: AnyColumn) =>
+        sql<number>`COUNT(CASE WHEN ${col} >= ${prevStart} AND ${col} < ${curStart} THEN 1 END)`;
+
+      const windowMeta = {
+        currentWindow: { start: curStart, end: fmt(today) },
+        previousWindow: { start: prevStart, end: curStart },
+      };
+
+      if (channel === "linkedin") {
+        const rows = await db
+          .select({
+            curStarted: curCount(outreach.startDate),
+            prevStarted: prevCount(outreach.startDate),
+            curConnected: curCount(outreach.connectedDate),
+            prevConnected: prevCount(outreach.connectedDate),
+            curReplied: curCount(outreach.repliedDate),
+            prevReplied: prevCount(outreach.repliedDate),
+          })
+          .from(outreach);
+        const r = rows[0];
+        return {
+          channel,
+          windowDays,
+          ...windowMeta,
+          metrics: [
+            buildMetric("outreachStarted", Number(r.curStarted), Number(r.prevStarted)),
+            buildMetric("connections", Number(r.curConnected), Number(r.prevConnected)),
+            buildMetric("replies", Number(r.curReplied), Number(r.prevReplied)),
+          ],
+        };
+      }
+
+      if (channel === "upworkBids") {
+        const rows = await db
+          .select({
+            curSent: curCount(upworkBids.proposalSent),
+            prevSent: prevCount(upworkBids.proposalSent),
+            curViewed: curCount(upworkBids.viewDate),
+            prevViewed: prevCount(upworkBids.viewDate),
+            curReplied: curCount(upworkBids.replyDate),
+            prevReplied: prevCount(upworkBids.replyDate),
+            curConnects: sql<number>`COALESCE(SUM(CASE WHEN ${upworkBids.proposalSent} >= ${curStart} THEN ${upworkBids.connectsSpent} END), 0)`,
+            prevConnects: sql<number>`COALESCE(SUM(CASE WHEN ${upworkBids.proposalSent} >= ${prevStart} AND ${upworkBids.proposalSent} < ${curStart} THEN ${upworkBids.connectsSpent} END), 0)`,
+          })
+          .from(upworkBids);
+        const r = rows[0];
+        return {
+          channel,
+          windowDays,
+          ...windowMeta,
+          metrics: [
+            buildMetric("bidsSent", Number(r.curSent), Number(r.prevSent)),
+            buildMetric("viewed", Number(r.curViewed), Number(r.prevViewed)),
+            buildMetric("replied", Number(r.curReplied), Number(r.prevReplied)),
+            buildMetric("connectsSpent", Number(r.curConnects), Number(r.prevConnects)),
+          ],
+        };
+      }
+
+      // channel === "upworkOutreach"
+      const rows = await db
+        .select({
+          curNew: curCount(upworkOutreach.proposalSent),
+          prevNew: prevCount(upworkOutreach.proposalSent),
+          curReplied: curCount(upworkOutreach.replyDate),
+          prevReplied: prevCount(upworkOutreach.replyDate),
+          curCalls: curCount(upworkOutreach.initialCallDate),
+          prevCalls: prevCount(upworkOutreach.initialCallDate),
+        })
+        .from(upworkOutreach);
+      const r = rows[0];
+      return {
+        channel,
+        windowDays,
+        ...windowMeta,
+        metrics: [
+          buildMetric("newDeals", Number(r.curNew), Number(r.prevNew)),
+          buildMetric("replies", Number(r.curReplied), Number(r.prevReplied)),
+          buildMetric("initialCalls", Number(r.curCalls), Number(r.prevCalls)),
+        ],
       };
     }),
   }),

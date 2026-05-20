@@ -426,4 +426,146 @@ export const upworkTools = {
       }));
     }),
   }),
+
+  // ── 17. Lost reason breakdown ───────────────────────────────────────────
+  getLostReasonBreakdown: tool({
+    description:
+      "Aggregate why Upwork outreach deals are lost. Groups deals by lost_reason and returns, per reason: " +
+      "deal count, share of all lost deals, and the total/average estimate_amount of those deals " +
+      "(the dollar value that walked away). Only deals with a non-null lost_reason are included. " +
+      "Use this to understand the dominant causes of lost deals. " +
+      "Optionally filter by profile or by date range on proposal_sent.",
+    inputSchema: zodSchema(
+      z.object({
+        profile: z.string().optional().describe("Filter by Upwork profile name."),
+        startDate: z.string().optional().describe("Start date filter on proposal_sent (YYYY-MM-DD inclusive)."),
+        endDate: z.string().optional().describe("End date filter on proposal_sent (YYYY-MM-DD inclusive)."),
+      }),
+    ),
+    execute: withToolError(async ({ profile, startDate, endDate }) => {
+      const conditions = [
+        isNotNull(upworkOutreach.lostReason),
+        ...timestampDateRange(upworkOutreach.proposalSent, startDate, endDate),
+      ];
+      if (profile) conditions.push(eq(upworkOutreach.profile, profile));
+
+      const rows = await db
+        .select({
+          lostReason: upworkOutreach.lostReason,
+          deals: count(),
+          totalEstimateValue: sql<number>`COALESCE(SUM(${upworkOutreach.estimateAmount}), 0)`,
+          avgEstimateAmount: sql<number>`ROUND(AVG(${upworkOutreach.estimateAmount})::numeric, 0)`,
+        })
+        .from(upworkOutreach)
+        .where(and(...conditions))
+        .groupBy(upworkOutreach.lostReason)
+        .orderBy(desc(count()));
+
+      const totalLost = rows.reduce((sum, r) => sum + r.deals, 0);
+
+      return rows.map((r) => ({
+        lostReason: r.lostReason,
+        deals: r.deals,
+        pctOfLost: pct(r.deals, totalLost),
+        totalEstimateValue: Number(r.totalEstimateValue),
+        avgEstimateAmount: Number(r.avgEstimateAmount) || 0,
+      }));
+    }),
+  }),
+
+  // ── 18. Upwork pipeline value ───────────────────────────────────────────
+  getUpworkPipelineValue: tool({
+    description:
+      "Dollar-value analysis of the Upwork outreach pipeline, based on estimate_amount. Returns: " +
+      "(1) summary — deals with an estimate, total estimate value, won deals, won value, estimate win rate; " +
+      "(2) byStage — estimate value and deal count grouped by pipeline stage; " +
+      "(3) byDealSizeBand — deal count, won count, win rate, and total value per estimate-size band. " +
+      "Only deals with a non-null estimate_amount are included. Optionally filter by profile or date range.",
+    inputSchema: zodSchema(
+      z.object({
+        profile: z.string().optional().describe("Filter by Upwork profile name."),
+        startDate: z.string().optional().describe("Start date filter on proposal_sent (YYYY-MM-DD inclusive)."),
+        endDate: z.string().optional().describe("End date filter on proposal_sent (YYYY-MM-DD inclusive)."),
+      }),
+    ),
+    execute: withToolError(async ({ profile, startDate, endDate }) => {
+      const conditions = [
+        isNotNull(upworkOutreach.estimateAmount),
+        ...timestampDateRange(upworkOutreach.proposalSent, startDate, endDate),
+      ];
+      if (profile) conditions.push(eq(upworkOutreach.profile, profile));
+
+      const bandExpr = sql<string>`
+        CASE
+          WHEN ${upworkOutreach.estimateAmount} < 5000  THEN '< $5k'
+          WHEN ${upworkOutreach.estimateAmount} < 15000 THEN '$5k-15k'
+          WHEN ${upworkOutreach.estimateAmount} < 30000 THEN '$15k-30k'
+          WHEN ${upworkOutreach.estimateAmount} < 50000 THEN '$30k-50k'
+          ELSE '$50k+'
+        END
+      `;
+      const wonExpr = sql<number>`COUNT(CASE WHEN ${upworkOutreach.estimateResult} = 'Successful' THEN 1 END)`;
+
+      const summaryRows = await db
+        .select({
+          dealsWithEstimate: count(),
+          totalEstimateValue: sql<number>`COALESCE(SUM(${upworkOutreach.estimateAmount}), 0)`,
+          wonDeals: wonExpr,
+          wonValue: sql<number>`COALESCE(SUM(CASE WHEN ${upworkOutreach.estimateResult} = 'Successful' THEN ${upworkOutreach.estimateAmount} END), 0)`,
+        })
+        .from(upworkOutreach)
+        .where(and(...conditions));
+
+      const byStage = await db
+        .select({
+          stage: upworkOutreach.stage,
+          deals: count(),
+          totalEstimateValue: sql<number>`COALESCE(SUM(${upworkOutreach.estimateAmount}), 0)`,
+          avgEstimateAmount: sql<number>`ROUND(AVG(${upworkOutreach.estimateAmount})::numeric, 0)`,
+        })
+        .from(upworkOutreach)
+        .where(and(...conditions))
+        .groupBy(upworkOutreach.stage)
+        .orderBy(desc(sql`SUM(${upworkOutreach.estimateAmount})`));
+
+      const byBand = await db
+        .select({
+          band: bandExpr,
+          deals: count(),
+          won: wonExpr,
+          totalEstimateValue: sql<number>`COALESCE(SUM(${upworkOutreach.estimateAmount}), 0)`,
+        })
+        .from(upworkOutreach)
+        .where(and(...conditions))
+        .groupBy(bandExpr);
+
+      const s = summaryRows[0] ?? { dealsWithEstimate: 0, totalEstimateValue: 0, wonDeals: 0, wonValue: 0 };
+      const bandOrder = ["< $5k", "$5k-15k", "$15k-30k", "$30k-50k", "$50k+"];
+
+      return {
+        summary: {
+          dealsWithEstimate: s.dealsWithEstimate,
+          totalEstimateValue: Number(s.totalEstimateValue),
+          wonDeals: Number(s.wonDeals),
+          wonValue: Number(s.wonValue),
+          estimateWinRatePct: pct(Number(s.wonDeals), s.dealsWithEstimate),
+        },
+        byStage: byStage.map((r) => ({
+          stage: r.stage,
+          deals: r.deals,
+          totalEstimateValue: Number(r.totalEstimateValue),
+          avgEstimateAmount: Number(r.avgEstimateAmount) || 0,
+        })),
+        byDealSizeBand: byBand
+          .map((r) => ({
+            band: r.band,
+            deals: r.deals,
+            won: Number(r.won),
+            winRatePct: pct(Number(r.won), r.deals),
+            totalEstimateValue: Number(r.totalEstimateValue),
+          }))
+          .sort((a, b) => bandOrder.indexOf(a.band) - bandOrder.indexOf(b.band)),
+      };
+    }),
+  }),
 };

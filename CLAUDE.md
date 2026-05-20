@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project overview
 
-CipherCross Internal Analytics Tool — a "Chat-with-Data" interface for LinkedIn and Upwork outreach pipelines. An AI assistant (Claude 3.5 Sonnet via Vercel AI SDK) answers analytical questions by running Drizzle queries against a PostgreSQL database synced from Airtable.
+CipherCross Internal Analytics Tool — a "Chat-with-Data" interface for LinkedIn and Upwork outreach pipelines. An AI assistant (Claude Opus 4.7 via Vercel AI SDK) answers analytical questions by running Drizzle queries against a PostgreSQL database synced from Airtable.
 
 ## Commands
 
@@ -26,7 +26,7 @@ npm run db:studio    # open Drizzle Studio
 - **Clerk** — auth; `middleware.ts` runs `clerkMiddleware()` on all routes
 - **Drizzle ORM** + **postgres** driver — schema in `db/schema.ts`, client singleton in `db/index.ts`
 - **PostgreSQL** on Railway — connection via `DATABASE_URL`
-- **Vercel AI SDK** (`ai`, `@ai-sdk/anthropic`) + **Claude 3.5 Sonnet** — chat backend
+- **Vercel AI SDK** (`ai`, `@ai-sdk/anthropic`) + **Claude Opus 4.7** — chat backend
 - **Airtable** → PostgreSQL sync via `/api/sync` (triggered by Vercel Cron or UI button)
 
 ## Architecture
@@ -67,13 +67,15 @@ Foreign keys: `contacts → companies`, `contacts → campaigns`, `outreach → 
 
 No FK between the two Upwork tables (independent Airtable tables).
 
-## AI tools (in `/api/chat/route.ts`)
+## AI tools (in `app/api/chat/tools/`)
 
-Three Drizzle-backed tools exposed to Claude:
+Drizzle-backed tools exposed to Claude, split per channel and re-exported from `tools/index.ts`:
 
-- `getCampaignFunnel` — aggregates outreach counts by outreach_status (Waiting/Active/Connected/Replied), where Replied = Replied+Continued+Stopped; optionally filtered by campaign name
-- `compareHookPerformance` — joins contacts + outreach to compare AI vs manual hook reply rates
-- `getRecentResponses` — fetches recent replied outreach joined with contact + company data
+- `linkedin.tools.ts` — getCampaignFunnel, compareCampaigns, compareHookPerformance, getResponseBreakdown, getMessageSequenceEffectiveness, getOutreachTimeline, getIndustryPerformance, getGeographyPerformance, getLeadPipeline, getPipelineVelocity, getRecentResponses
+- `upwork.tools.ts` — getUpworkBidsFunnel, getUpworkBidPerformance, getUpworkConnectsROI, getUpworkOutreachPipeline, getUpworkRecentActivity, getUpworkBidsTrend, getLostReasonBreakdown, getUpworkPipelineValue
+- `cross-channel.tools.ts` — getCrossChannelSummary, getPeriodComparison
+- `detail.tools.ts` — readLeadDetails (deep qualitative read of a single lead)
+- `sql.tools.ts` — executeSQL (read-only ad-hoc SELECT/CTE escape hatch)
 
 ## Data flow
 
