@@ -13,6 +13,7 @@ export default function ChatPage() {
   const { messages, sendMessage, status } = useChat({ transport });
   const [input, setInput] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -25,6 +26,9 @@ export default function ChatPage() {
     const text = input.trim();
     if (!text || isLoading) return;
     setInput("");
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+    }
     await sendMessage({ text });
   }
 
@@ -231,8 +235,13 @@ export default function ChatPage() {
       <div className="shrink-0 border-t border-white/[0.04] bg-zinc-900/80 backdrop-blur-sm px-4 py-4">
         <form onSubmit={handleSubmit} className="flex gap-3 max-w-3xl mx-auto">
           <textarea
+            ref={textareaRef}
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={(e) => {
+              setInput(e.target.value);
+              e.target.style.height = "auto";
+              e.target.style.height = `${e.target.scrollHeight}px`;
+            }}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
@@ -244,7 +253,7 @@ export default function ChatPage() {
             className="flex-1 resize-none rounded-xl bg-zinc-800/80 border border-white/[0.06]
                        px-4 py-2.5 text-sm text-zinc-100 placeholder-zinc-500
                        focus:outline-none focus:border-cyan-500/40 focus:shadow-[0_0_12px_rgba(6,182,212,0.08)]
-                       transition-all duration-200"
+                       transition-all duration-200 max-h-48 overflow-y-auto"
           />
           <button
             type="submit"
