@@ -13,6 +13,9 @@
     "db:studio": "drizzle-kit studio",
     "db:full-sync": "npx tsx scripts/full-sync.ts"
   },
+  "engines": {
+    "node": ">=20.9.0"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
