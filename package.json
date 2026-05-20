@@ -22,7 +22,6 @@
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.78",
     "@ai-sdk/react": "^3.0.187",
-    "@clerk/nextjs": "^7.3.7",
     "ai": "^6.0.185",
     "airtable": "^0.12.2",
     "dotenv": "^17.4.2",

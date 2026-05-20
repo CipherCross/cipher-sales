@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import Airtable from "airtable";
-import { auth } from "@clerk/nextjs/server";
 import { db } from "@/db";
 import { companies, campaigns, contacts, outreach, upworkBids, upworkOutreach } from "@/db/schema";
 
@@ -58,9 +57,8 @@ async function fetchAll(base: Airtable.Base, table: string): Promise<Airtable.Re
 
 export async function POST(req: NextRequest) {
   const secret = req.headers.get("authorization");
-  if (secret !== `Bearer ${process.env.CRON_SECRET}`) {
-    const { userId } = await auth();
-    if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (process.env.CRON_SECRET && secret !== `Bearer ${process.env.CRON_SECRET}`) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
