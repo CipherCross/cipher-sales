@@ -7,7 +7,7 @@ const globalForDb = globalThis as unknown as { _pgClient: postgres.Sql }
 
 const client =
   globalForDb._pgClient ??
-  postgres(process.env.DATABASE_URL!, { max: 10 })
+  postgres(process.env.STORAGE_DATABASE_URL!, { max: 10 })
 
 if (process.env.NODE_ENV !== 'production') globalForDb._pgClient = client
 

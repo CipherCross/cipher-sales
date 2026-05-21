@@ -43,7 +43,7 @@ const UPWORK_TABLE = {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const client = postgres(process.env.DATABASE_URL!, { max: 1 });
+const client = postgres(process.env.STORAGE_DATABASE_URL!, { max: 1 });
 const db = drizzle(client, { schema });
 
 function getBase(baseId: string) {
